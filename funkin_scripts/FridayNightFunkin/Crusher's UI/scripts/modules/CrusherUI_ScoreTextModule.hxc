@@ -1,0 +1,204 @@
+import funkin.Highscore;
+import funkin.Paths;
+import funkin.play.PlayState;
+import funkin.modding.events.ScriptEvent;
+import funkin.modding.events.UpdateScriptEvent;
+import funkin.modding.module.Module;
+import funkin.play.scoring.Scoring;
+import flixel.FlxG;
+import flixel.math.FlxMath;
+import flixel.text.FlxText;
+import flixel.text.FlxTextBorderStyle;
+
+class CrusherUIModule extends Module
+{
+	// -----------------------------------
+	// Settings //
+
+	/**
+	 * The brackets the UI elements are put in.
+	 */
+	var BRACKETS:Array<String> = ['[', '] '];
+
+	/**
+	 * The brackets the Rank Text is put in.
+	 */
+	var RANK_BRACKETS:Array<String> = [' (', ')'];
+
+	/**
+	 * The brackets the Extra Rank Text is put in. (like GOLD on Perfect)
+	 */
+	var EXTRA_RANK_BRACKETS:Array<String> = [' [', ']'];
+
+	/**
+	 * The text that splits the UI element name and their value.
+	 */
+	var TEXT_SPLITTER:String = ': ';
+
+	/**
+	 * The accuracy Sign displayed.
+	 */
+	var ACCURACY_SIGN:String = '%';
+
+	/**
+	 * Whether to show the ending bracket on the last element.
+	 *
+	 * Useful if you wanna use something like // to split the texts apart using only the last brackets.
+	 */
+	var SHOW_LAST_BRACKET_ON_LAST_ELEMENT:Bool = true;
+
+	/**
+	 * Whether they should be placed under the icons or not.
+	 */
+	var TEXT_UNDER_ICONS:Bool = false;
+
+	/**
+	 * The rating text that goes with their respective percentages. (Determined by the Scoring Class)
+	 *
+	 * [Rating Name, Display Name]
+	 */
+	var RATING_TEXTS:Array<Array<String>> = [
+		['PERFECT_GOLD', 'Perfect!' + EXTRA_RANK_BRACKETS[0] + 'GOLD' + EXTRA_RANK_BRACKETS[1]],
+		['PERFECT', 	 'Perfect!'],
+		['EXCELLENT', 	 'Excellent'],
+		['GREAT', 	 	 'Great'],
+		['GOOD', 	 	 'Good'],
+		['SHIT', 	 	 'Shit...'],
+		[null,			 '?']
+	];
+
+	// -----------------------------------
+
+	var scoreTxt:FlxText;
+
+	public function new():Void
+	{
+		super("CrusherUI_ScoreTextModule");
+	}
+
+	public override function onStateChangeEnd(event:ScriptEvent):Void
+	{
+		super.onStateChangeEnd(event);
+
+		if (PlayState.instance == null)
+			return;
+
+		PlayState.instance.scoreText.visible = false;
+		PlayState.instance.scoreText.active = false;
+
+		scoreTxt = new FlxText(0, PlayState.instance.scoreText.y, FlxG.width, '', PlayState.instance.scoreText.size);
+		scoreTxt.setFormat(Paths.font('vcr.ttf'), PlayState.instance.scoreText.size, PlayState.instance.scoreText.color,
+			'center', PlayState.instance.scoreText.borderStyle, PlayState.instance.scoreText.borderColor);
+
+		scoreTxt.screenCenter('x');
+		scoreTxt.scrollFactor.set(PlayState.instance.scoreText.scrollFactor.x, PlayState.instance.scoreText.scrollFactor.y);
+		scoreTxt.zIndex = returnScoreTxtZIndex();
+		scoreTxt.cameras = [PlayState.instance.camHUD];
+		PlayState.instance.add(scoreTxt);
+		PlayState.instance.refresh();
+	}
+
+	public override function onUpdate(event:ScriptEvent):Void
+	{
+		super.onUpdate(event);
+
+		if(PlayState.instance == null)
+			return;
+
+		if(scoreTxt != null)
+		{
+			scoreTxt.text = getScoreText() + getMissesText() + getAccuracyText();
+		}
+	}
+
+	function returnScoreTxtZIndex():Int
+	{
+		if (!TEXT_UNDER_ICONS)
+		{
+			if (PlayState.instance.iconP2 != null)
+				return PlayState.instance.iconP2.zIndex + 1;
+			else if (PlayState.instance.iconP1 != null)
+				return PlayState.instance.iconP1.zIndex + 1;
+		}
+
+		return PlayState.instance.scoreText.zIndex + 1;
+	}
+
+	function getScoreText():String
+	{
+		return BRACKETS[0]
+		+ 'Score'
+		+ TEXT_SPLITTER
+		+ PlayState.instance.songScore
+		+ BRACKETS[1];
+	}
+
+	function getMissesText():String
+	{
+		return BRACKETS[0]
+		+ 'Misses'
+		+ TEXT_SPLITTER
+		+ Highscore.tallies.missed
+		+ BRACKETS[1];
+	}
+
+	function getAccuracyText():String
+	{
+		return BRACKETS[0]
+		+ 'Accuracy'
+		+ TEXT_SPLITTER
+		+ returnAccuracy()
+		+ ACCURACY_SIGN
+		+ RANK_BRACKETS[0]
+		+ returnRank()
+		+ RANK_BRACKETS[1]
+		+ if (SHOW_LAST_BRACKET_ON_LAST_ELEMENT) BRACKETS[1];
+	}
+
+	function returnAccuracy():Float
+	{
+		var clearPercentFloat:Float = FlxMath.roundDecimal((Highscore.tallies.sick + Highscore.tallies.good) / noteHitCalculation() * 100, 2);
+		if (Math.isNaN(clearPercentFloat)) return 0;
+		return clearPercentFloat;
+	}
+
+	function returnRank():String
+	{
+		var score:String = Scoring.calculateRank(
+		{
+            score: PlayState.instance.songScore,
+            tallies:
+            {
+                sick: Highscore.tallies.sick,
+                good: Highscore.tallies.good,
+                bad: Highscore.tallies.bad,
+                shit: Highscore.tallies.shit,
+                missed: Highscore.tallies.missed,
+                combo: Highscore.tallies.combo,
+                maxCombo: Highscore.tallies.maxCombo,
+                totalNotesHit: Highscore.tallies.totalNotesHit,
+                totalNotes: noteHitCalculation()
+            }
+		});
+
+		for (i in 0...RATING_TEXTS.length - 1)
+		{
+			if (score == RATING_TEXTS[i][0])
+				return RATING_TEXTS[i][1];
+		}
+
+		return '?';
+	}
+
+	/**
+	 * This is a replacement for total notes.
+	 *
+	 * Instead of using the number of all the notes in the chart,
+	 * we instead do it from all the notes that we pressed and missed as of right now.
+	 * @return Notes Hit + Missed Notes
+	 */
+	function noteHitCalculation():Float
+	{
+		return (Highscore.tallies.totalNotesHit + Highscore.tallies.missed);
+	}
+}

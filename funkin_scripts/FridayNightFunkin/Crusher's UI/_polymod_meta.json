@@ -1,0 +1,14 @@
+{
+  "title": "Crusher's UI",
+  "description": "This mod adds more to the already existing score text!",
+  "api_version": "0.1.0",
+  "mod_version": "1.0.0",
+  "license": "MIT",
+
+  "contributors": [
+    {
+      "name": "CrusherNotDrip",
+      "description": "Made the mod."
+    }
+  ]
+}
