@@ -1,2 +1,6 @@
 # ScriptsNotDrip
-These repo contains scripts I made for Friday Night Funkin'
+This repo contains scripts I made.
+
+## Friday Night Funkin' Scripts:
+### Friday Night Funkin'
+- Crusher's UI (V1.0.0)
