@@ -10,7 +10,7 @@ import flixel.math.FlxMath;
 import flixel.text.FlxText;
 import flixel.text.FlxTextBorderStyle;
 
-class CrusherUIModule extends Module
+class CrushersUIScoreTextModule extends Module
 {
 	// -----------------------------------
 	// Settings //
@@ -73,7 +73,7 @@ class CrusherUIModule extends Module
 
 	public function new():Void
 	{
-		super("CrusherUI_ScoreTextModule");
+		super("CrushersUIScoreTextModule");
 	}
 
 	public override function onStateChangeEnd(event:ScriptEvent):Void
