@@ -157,8 +157,8 @@ class CrushersUIScoreTextModule extends Module
 
 	function returnAccuracy():Float
 	{
-		var clearPercentFloat:Float = FlxMath.roundDecimal((Highscore.tallies.sick + Highscore.tallies.good) / noteHitCalculation() * 100, 2);
-		if (Math.isNaN(clearPercentFloat)) return 0;
+		var clearPercentFloat:Float = FlxMath.roundDecimal((Highscore.tallies.sick + Highscore.tallies.good - Highscore.tallies.missed) / noteHitCalculation() * 100, 2);
+		if (Math.isNaN(clearPercentFloat) || clearPercentFloat < 0) return 0;
 		return clearPercentFloat;
 	}
 
